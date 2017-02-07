@@ -1,0 +1,151 @@
+.c-board-container {
+  @include flex-container();
+  margin-bottom: $base-spacing-unit-large;
+}
+
+.c-puzzle {
+  position: relative;
+  height: 579px;
+  width: 868px;
+  min-width: 868px;
+  margin-right: $base-spacing-unit;
+}
+
+.c-puzzle__solved,
+.c-puzzle__unsolved {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-block;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0s linear 0.3s;
+  box-shadow: 4px 3px 3px 1px $color-alpha;
+
+  &.show {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s;
+  }
+}
+
+@keyframes finish {
+  0% {
+    transform: scale(1) rotateZ(0deg);
+  }
+  25% {
+    transform: scale(1.4) rotateZ(0deg);
+  }
+  50% {
+    transform: scale(1.4) rotateZ(360deg);
+  }
+  75% {
+    transform: scale(1.4) rotateZ(720deg);
+  }
+  100% {
+    transform: rotateZ(360deg);
+  }
+}
+
+.c-puzzle__hexagon {
+  position: absolute;
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+
+  &.finished {
+    animation: finish 1s ease-in-out 0ms 10;
+    @for $index from 1 through 41 {
+      &:nth-of-type(#{$index}) {
+        animation-delay: 3s + ($index*0.2s);
+      }
+    }
+  }
+
+}
+
+$col-map: (
+        1: 53px,
+        2: 137px,
+        3: 221px,
+        4: 305px,
+        5: 389px,
+        6: 473px,
+        7: 557px,
+        8: 641px,
+        9: 725px
+);
+@each $key, $value in $col-map {
+  .col-#{$key} {
+    left: $value;
+  }
+}
+
+$row-map: (
+        1: 51px,
+        2: 99px,
+        3: 148px,
+        4: 196px,
+        5: 245px,
+        6: 293px,
+        7: 342px,
+        8: 390px,
+        9: 439px,
+);
+
+@each $key, $value in $row-map {
+  .row-#{$key} {
+    top: $value;
+  }
+}
+
+#hexagon-14 {
+  top: 147px;
+}
+
+#hexagon-23 {
+  top: 244px;
+}
+
+#hexagon-32 {
+  top: 341px;
+}
+
+#hexagon-41 {
+  top: 438px;
+}
+
+.c-pieces {
+  position: relative;
+  height: 300px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s, visibility 0s linear 0.6s;
+
+  &.show {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s;
+  }
+}
+
+.c-pieces__piece {
+  position: absolute;
+  display: inline-block;
+
+  @for $scramble-row from 0 through 4 {
+    @for $scramble-col from 1 through 9 {
+      &:nth-child(#{$scramble-col + ($scramble-row * 9)}) {
+        top: $scramble-row * 40px;
+        left: $scramble-col * 110px - 110px;
+      }
+    }
+  }
+
+  @at-root .c-puzzle__hexagon & {
+    width: 110px;
+    height: 95px;
+    top: -5px;
+    left: -12px;
+  }
+}
