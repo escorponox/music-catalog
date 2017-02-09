@@ -2,7 +2,6 @@ const renderAlbums = (albums) => {
   const catalogContainer = document.getElementById('album-container');
   const catalogFragment = document.createDocumentFragment();
 
-  console.log(albums[0]);
   albums.forEach(album => {
     const container = document.createElement('DIV');
     container.classList.add('c-album');
@@ -20,6 +19,7 @@ const renderAlbums = (albums) => {
     trackContainer.innerHTML = '<h3 class="c-album__tracks__header">Track List</h3>';
     const trackList = document.createElement('UL');
     trackList.classList.add('c-album__tracks__list');
+    // console.log(album.album_id, album.trackList);
     album.trackList.forEach((track) => {
       const li = document.createElement('LI');
       li.classList.add('c-album__tracks__list__track');

@@ -18,6 +18,10 @@ const fetchAlbums = function (db) {
   xmlhttp.send();
 };
 
+const safeCallRender = (openTransactions, event) => {
+  if (!openTransactions) renderCatalog({updating: false}, event);
+};
+
 const fetchTracks = (event) => {
   const db = event.target.db;
   const tracksTransaction = db.transaction('albums', 'readonly'),
@@ -25,6 +29,9 @@ const fetchTracks = (event) => {
     getAllAlbums = transactionStore.getAll();
 
   getAllAlbums.onsuccess = (event) => {
+
+    let openTransactions = event.target.result.length;
+
     event.target.result.forEach((album) => {
       const xmlhttp = new XMLHttpRequest();
 
@@ -33,6 +40,10 @@ const fetchTracks = (event) => {
 
           const tracksTransaction = db.transaction('albums', 'readwrite'),
             transactionStore = tracksTransaction.objectStore('albums');
+
+          transactionStore.transaction.oncomplete = (event) => {
+            safeCallRender(--openTransactions, event);
+          };
 
           const tracks = JSON.parse(this.response).dataset;
           album['trackList'] = tracks.reduce((acc, curr) => {
@@ -46,10 +57,6 @@ const fetchTracks = (event) => {
       xmlhttp.open('GET', `https://freemusicarchive.org/api/get/tracks.json?api_key=TBHJ7JH66M2F468E&album_id=${album.album_id}`, true);
       xmlhttp.send();
     });
-  };
-
-  transactionStore.transaction.oncomplete = (event) => {
-    renderCatalog({updating: false}, event)
   };
 };
 
