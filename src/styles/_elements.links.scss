@@ -1,9 +1,9 @@
 a {
   text-decoration: none;
-  color: inherit;
+  color: $color-blue;
 
   &:hover,
   &:focus {
-    color: inherit;
+    color: $color-blue-dark;
   }
 }

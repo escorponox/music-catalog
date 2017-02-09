@@ -1,80 +1,69 @@
-export const buildURL = (type, parameterName, parameterValue) => {
-  const query = parameterName ? `&${parameterName}=${parameterValue}` : '';
-  return `https://freemusicarchive.org/api/get/${type}.json?api_key=TBHJ7JH66M2F468E${query}`
-};
+import renderCatalog from './render-catalog';
 
-const fetch = function (db, type, onCompleteCb = () => {}, parameterName, parameterValue) {
+const fetchAlbums = function (db) {
   const xmlhttp = new XMLHttpRequest();
 
   xmlhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
-      const loadArtistsTransaction = db.transaction(type, 'readwrite'),
-        transactionStore = loadArtistsTransaction.objectStore(type),
-        artists = JSON.parse(this.response).dataset;
+      const fetchTransaction = db.transaction('albums', 'readwrite'),
+        transactionStore = fetchTransaction.objectStore('albums'),
+        albums = JSON.parse(this.response).dataset;
 
-      loadArtistsTransaction.oncomplete = onCompleteCb;
+      fetchTransaction.oncomplete = fetchTracks;
 
-      artists.forEach(artist => transactionStore.put(artist));
+      albums.forEach(album => transactionStore.put(album));
     }
   };
-  xmlhttp.open('GET', buildURL(type, parameterName, parameterValue), true);
+  xmlhttp.open('GET', 'https://freemusicarchive.org/api/get/albums.json?api_key=TBHJ7JH66M2F468E', true);
   xmlhttp.send();
-};
-
-const fetchAlbums = function (event) {
-  const db = event.target.db;
-  const transaction = db.transaction('artists', 'readonly'),
-    transactionStore = transaction.objectStore('artists'),
-    getAllArtists = transactionStore.getAll();
-
-  getAllArtists.onsuccess = (event) => {
-    event.target.result.forEach((artist) => {
-      fetch(db, 'albums', fetchTracks, 'artist_id', artist.artist_id);
-    });
-  };
 };
 
 const fetchTracks = (event) => {
   const db = event.target.db;
-  const transaction = db.transaction('albums', 'readonly'),
-    transactionStore = transaction.objectStore('albums'),
+  const tracksTransaction = db.transaction('albums', 'readonly'),
+    transactionStore = tracksTransaction.objectStore('albums'),
     getAllAlbums = transactionStore.getAll();
 
   getAllAlbums.onsuccess = (event) => {
     event.target.result.forEach((album) => {
-      fetch(db, 'tracks', undefined, 'album_id', album.album_id);
+      const xmlhttp = new XMLHttpRequest();
+
+      xmlhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+
+          const tracksTransaction = db.transaction('albums', 'readwrite'),
+            transactionStore = tracksTransaction.objectStore('albums');
+
+          const tracks = JSON.parse(this.response).dataset;
+          album['trackList'] = tracks.reduce((acc, curr) => {
+            acc.push(curr);
+            return acc;
+          }, []);
+          transactionStore.put(album);
+        }
+      };
+
+      xmlhttp.open('GET', `https://freemusicarchive.org/api/get/tracks.json?api_key=TBHJ7JH66M2F468E&album_id=${album.album_id}`, true);
+      xmlhttp.send();
     });
   };
 
-  const transactionOnArtists = db.transaction('artists', 'readonly'),
-    transactionOnArtistsStore = transactionOnArtists.objectStore('artists'),
-    getAllArtists = transactionOnArtistsStore.getAll();
-
-  getAllArtists.onsuccess = (event) => {
-    event.target.result.forEach((artist) => {
-      fetch(db, 'tracks', undefined, 'artist_id', artist.artist_id);
-    });
+  transactionStore.transaction.oncomplete = (event) => {
+    renderCatalog({updating: false}, event)
   };
-
-  transactionOnArtists.oncomplete = () => console.log('completed tracks');
 };
 
-export default (event) => {
-  console.log('starting load');
+export default (status, event) => {
+  status.upgrading = true;
   const db = event.target.result;
 
-  const artistStore = db.createObjectStore('artists', {keyPath: 'artist_id'});
-  artistStore.createIndex('artistName', 'artist_name');
-
   const albumStore = db.createObjectStore('albums', {keyPath: 'album_id'});
-  albumStore.createIndex('album_name', 'album_name');
-  albumStore.createIndex('artist_id', 'artist_id');
+  albumStore.createIndex('album_title', 'album_title');
 
-  const trackStore = db.createObjectStore('tracks', {keyPath: 'track_id'});
-  trackStore.createIndex('track_name', 'track_name');
-  trackStore.createIndex('album_id', 'album_id');
-  trackStore.createIndex('artist_id', 'artist_id');
-
-  fetch(db, 'artists', fetchAlbums);
+  fetchAlbums(db);
 };
 
+// https://webpack.github.io/docs/hot-module-replacement.html
+if (module.hot) {
+  module.hot.accept();
+}
