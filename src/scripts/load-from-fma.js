@@ -64,6 +64,10 @@ export default (status, event) => {
   status.upgrading = true;
   const db = event.target.result;
 
+  console.log(db.objectStoreNames);
+  if(db.objectStoreNames.contains('albums')) {
+    db.deleteObjectStore('albums');
+  }
   const albumStore = db.createObjectStore('albums', {keyPath: 'album_id'});
   albumStore.createIndex('album_title', 'album_title');
 
