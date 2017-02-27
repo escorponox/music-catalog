@@ -1,4 +1,4 @@
-const renderAlbums = (albums) => {
+export const renderAlbums = (albums) => {
   const catalogContainer = document.getElementById('album-container');
   const catalogFragment = document.createDocumentFragment();
 
@@ -19,7 +19,6 @@ const renderAlbums = (albums) => {
     trackContainer.innerHTML = '<h3 class="c-album__tracks__header">Track List</h3>';
     const trackList = document.createElement('UL');
     trackList.classList.add('c-album__tracks__list');
-    // console.log(album.album_id, album.trackList);
     album.trackList.forEach((track) => {
       const li = document.createElement('LI');
       li.classList.add('c-album__tracks__list__track');
@@ -40,7 +39,7 @@ const renderAlbums = (albums) => {
 
 
 export default (status, event) => {
-  const db = event.target.db || event.target.result;
+  const db = event.target.result;
 
   if (!status.upgrading) {
     const transaction = db.transaction('albums', 'readonly'),

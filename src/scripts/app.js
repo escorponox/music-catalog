@@ -7,8 +7,6 @@ const appStatus = {
 };
 
 if ('indexedDB' in window) {
-  appStatus.indexedDBExists = true;
-
   const dbVersion = 1;
   const catalogDBOpenRequest = global.indexedDB.open('catalogDB', dbVersion);
 
